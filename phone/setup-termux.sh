@@ -3,8 +3,13 @@
 # Run: bash setup-termux.sh
 set -e
 
+echo "== Realignment: fix known Termux curl/openssl mismatch =="
+pkg update
+pkg upgrade -y
+pkg reinstall -y curl openssl openssl-tool git
+
 echo "== Installing packages =="
-pkg install -y git cmake clang curl jq make termux-api
+pkg install -y git cmake clang curl jq make ffmpeg termux-api
 
 BASE="$HOME/assistant"
 mkdir -p "$BASE/models" "$BASE/tmp"
@@ -16,7 +21,7 @@ if [ ! -d llama.cpp ]; then
 fi
 cd llama.cpp
 cmake -B build -DGGML_NATIVE=ON
-cmake --build build --config Release -j4
+cmake --build build --config Release -j2
 cd "$BASE"
 
 echo "== Building whisper.cpp (~10-20 min) =="
@@ -25,7 +30,7 @@ if [ ! -d whisper.cpp ]; then
 fi
 cd whisper.cpp
 cmake -B build -DGGML_NATIVE=ON
-cmake --build build --config Release -j4
+cmake --build build --config Release -j2
 cd "$BASE"
 
 echo "== Downloading models =="
@@ -40,6 +45,9 @@ if [ ! -f models/ggml-small.bin ]; then
     https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin
 fi
 
+chmod +x "$BASE"/*.sh 2>/dev/null || true
+
 echo "== Done =="
 echo "Next: run ./start-llm.sh and ./start-stt.sh in separate Termux sessions,"
 echo "then ./assistant.sh in a third."
+echo "For the optional GPU (Vulkan) build, see the README appendix."
